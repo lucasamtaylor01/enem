@@ -1,0 +1,5 @@
+microdados_enem_2024
+.venv
+data/data_processed
+data/data_raw
+*.csv
