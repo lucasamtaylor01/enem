@@ -1,3 +1,4 @@
-microdados_enem_2024
+MICRODADOS
 .venv
-data
+data_raw
+__pycache__
