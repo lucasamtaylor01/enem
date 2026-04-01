@@ -43,20 +43,6 @@ def tratamento_participantes(df, ano):
     
 
     df_participantes['NO_MUNICIPIO_PROVA'] = df_participantes['NO_MUNICIPIO_PROVA'].str.upper()
-    df_participantes['RENDA_FAMILIAR_SM_LOG'] = np.log1p(df_participantes['RENDA_FAMILIAR_SM'])
-
-    analise_de_outliers = ['RENDA_FAMILIAR_SM_LOG']
-    for col in analise_de_outliers:
-        Q1 = df_participantes[col].quantile(0.25)
-        Q3 = df_participantes[col].quantile(0.75)
-        IQR = Q3 - Q1
-        df_participantes = df_participantes[(df_participantes[col] >= Q1 - 1.5*IQR) & (df_participantes[col] <= Q3 + 1.5*IQR)]
-
-    proporcao_removida = ((df_participantes.shape[0] - df_participantes.shape[0]) / df_participantes.shape[0]) * 100
-    if proporcao_removida > 5:
-        print(f"A proporção de dados removidos é de {proporcao_removida:.2f}%, o que pode ser significativo.")
-    else:
-        print(f"A proporção de dados removidos é de {proporcao_removida:.2f}%, o que não é significativo.")
 
     df_municipio = df_participantes.groupby('NO_MUNICIPIO_PROVA').agg(
     RENDA_FAMILIAR_SM_MEDIA=('RENDA_FAMILIAR_SM', 'mean')).reset_index()
@@ -74,21 +60,6 @@ def tratamento_resultado(df):
     df_resultado = df_resultado.drop(columns=['TP_PRESENCA_CN', 'TP_PRESENCA_CH', 'TP_PRESENCA_LC', 'TP_PRESENCA_MT'])
 
     df_resultado['NO_MUNICIPIO_PROVA'] = df_resultado['NO_MUNICIPIO_PROVA'].str.upper()
-
-    analise_notas = ['NU_NOTA_CN', 'NU_NOTA_CH', 'NU_NOTA_LC', 'NU_NOTA_MT', 'NU_NOTA_REDACAO']
-    
-    for col in analise_notas:
-        Q1 = df_resultado[col].quantile(0.25)
-        Q3 = df_resultado[col].quantile(0.75)
-        IQR = Q3 - Q1
-        df_resultado = df_resultado[(df_resultado[col] >= Q1 - 1.5*IQR) & (df_resultado[col] <= Q3 + 1.5*IQR)]
-
-    proporcao_removida = ((df_resultado.shape[0] - df_resultado.shape[0]) / df_resultado.shape[0]) * 100
-    if proporcao_removida > 5:
-        print(f"A proporção de dados removidos é de {proporcao_removida:.2f}%, o que pode ser significativo.")
-    else:
-        print(f"A proporção de dados removidos é de {proporcao_removida:.2f}%, o que não é significativo.")
-
 
     df_resultado = df_resultado.groupby('NO_MUNICIPIO_PROVA').agg(
     UF=('SG_UF_PROVA', 'first'),
