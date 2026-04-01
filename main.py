@@ -29,6 +29,19 @@ OUTDIR_TRATAMENTO.mkdir(parents=True, exist_ok=True)
 print(f"Diretório criado com sucesso: {OUTDIR_TRATAMENTO}\n")
 
 print(f"Carregando dados de {ano}...\n")
+
+arquivos_microdados = {
+	2023: "MICRODADOS_ENEM_2023.csv",
+	2022: "MICRODADOS_ENEM_2022.csv",
+	2021: "MICRODADOS_ENEM_2021.csv",
+	2020: "MICRODADOS_ENEM_2020.csv",
+	2019: "MICRODADOS_ENEM_2019.csv",
+	2018: "MICRODADOS_ENEM_2018.csv",
+	2017: "MICRODADOS_ENEM_2017.csv",
+	2016: "MICRODADOS_ENEM_2016.csv",
+	2015: "MICRODADOS_ENEM_2015.csv",
+}
+
 if ano == 2024:
 	arquivo_participantes = INDIR / "PARTICIPANTES_2024.csv"
 	df_participantes_raw = pd.read_csv(arquivo_participantes, sep=';', encoding='latin-1')
@@ -36,40 +49,14 @@ if ano == 2024:
 	arquivo_resultados = INDIR / "RESULTADOS_2024.csv"
 	df_resultados_raw = pd.read_csv(arquivo_resultados, sep=';', encoding='latin-1')
 
-else:
-	if ano == 2023:
-		arquivo_microdados = INDIR / "MICRODADOS_ENEM_2023.csv"
-
-	elif ano == 2022:
-		arquivo_microdados = INDIR / "MICRODADOS_ENEM_2022.csv"
-
-	elif ano == 2021:
-		arquivo_microdados = INDIR / "MICRODADOS_ENEM_2021.csv"
-
-	elif ano == 2020:
-		arquivo_microdados = INDIR / "MICRODADOS_ENEM_2020.csv"
-
-	elif ano == 2019:
-		arquivo_microdados = INDIR / "MICRODADOS_ENEM_2019.csv"
-
-	elif ano == 2018:
-		arquivo_microdados = INDIR / "MICRODADOS_ENEM_2018.csv"
-	
-	elif ano == 2017:
-		arquivo_microdados = INDIR / "MICRODADOS_ENEM_2017.csv"
-	
-	elif ano == 2016:
-		arquivo_microdados = INDIR / "MICRODADOS_ENEM_2016.csv"
-
-	elif ano == 2015:
-		arquivo_microdados = INDIR / "MICRODADOS_ENEM_2015.csv"
-	
-	else:
-		print("Ano inválido. Por favor, escolha um ano entre 2015 e 2024.")
-		exit(1)
-
+elif ano in arquivos_microdados:
+	arquivo_microdados = INDIR / arquivos_microdados[ano]
 	df_microdados = pd.read_csv(arquivo_microdados, sep=';', encoding='latin-1')
 	df_participantes_raw, df_resultados_raw = separar_dados_participantes_resultados(df_microdados)
+
+else:
+	print("Ano inválido. Por favor, escolha um ano entre 2015 e 2024.")
+	exit(1)
 
 print(f"Dados de {ano} carregados com sucesso.\n")
 
