@@ -1,6 +1,4 @@
-import numpy as np
 from sklearn.preprocessing import StandardScaler
-
 
 def tratamento_participantes(df, ano):
 
@@ -74,13 +72,13 @@ def tratamento_resultado(df):
     return df_resultado
 
 def tratamento_clustering(df_municipio, df_resultado):
-    df_clustering = df_resultado.merge(
+    df_pre_clustering = df_resultado.merge(
     df_municipio,
     on='NO_MUNICIPIO_PROVA',
     how='left'
     )
 
-    X_scaled = df_clustering.copy()
+    X_scaled = df_pre_clustering.copy()
 
     X_scaled = X_scaled.drop(columns=['NO_MUNICIPIO_PROVA', 'RENDA_FAMILIAR_SM_MEDIA', 'UF', 'QTD_PARTICIPANTES'])
 
@@ -88,18 +86,19 @@ def tratamento_clustering(df_municipio, df_resultado):
     scaler = StandardScaler()
     X_scaled[col_scatter] = scaler.fit_transform(X_scaled[col_scatter])
 
-    return df_clustering, X_scaled
+    return df_pre_clustering, X_scaled
 
 
 def tratamento_de_dados(df_participantes_raw, df_resultado_raw, ano):
     df_participantes = tratamento_participantes(df_participantes_raw, ano)
     df_resultado = tratamento_resultado(df_resultado_raw)
-    df_clustering, X_scaled = tratamento_clustering(df_participantes, df_resultado)
+    df_pre_clustering, X_scaled = tratamento_clustering(df_participantes, df_resultado)
 
-    return df_clustering, X_scaled
+    return df_pre_clustering, X_scaled
 
-def separar_dados_participantes_resultados(df_microdados, ano):
+def separar_dados_participantes_resultados(df_microdados):
     df_participantes = df_microdados[['IN_TREINEIRO', 'SG_UF_PROVA', 'Q006', 'NO_MUNICIPIO_PROVA']]
     df_resultado = df_microdados[['SG_UF_PROVA', 'NO_MUNICIPIO_PROVA', 'TP_PRESENCA_CN', 'TP_PRESENCA_CH', 'TP_PRESENCA_LC', 'TP_PRESENCA_MT', 'NU_NOTA_CN', 'NU_NOTA_CH', 'NU_NOTA_LC', 'NU_NOTA_MT', 'NU_NOTA_REDACAO' ]]
 
     return df_participantes, df_resultado
+
