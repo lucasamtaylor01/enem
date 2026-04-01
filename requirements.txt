@@ -3,3 +3,6 @@ ipykernel
 scikit-learn
 kneed
 matplotlib
+plotly
+nbformat>=4.2.0 
+numpy
