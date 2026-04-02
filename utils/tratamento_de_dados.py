@@ -1,5 +1,63 @@
 from sklearn.preprocessing import StandardScaler
 
+import pandas as pd
+
+from utils.carregamento_dados import (
+    ARQUIVOS_MICRODADOS,
+    INDIR,
+    OUTDIR_TRATAMENTO_BASE,
+    preparar_diretorios,
+)
+
+preparar_diretorios()
+
+def carregar_ou_tratar_dados(ano: int):
+	outdir_tratamento = OUTDIR_TRATAMENTO_BASE / str(ano)
+	outdir_tratamento.mkdir(parents=True, exist_ok=True)
+
+	caminho_tratado = outdir_tratamento / f"ANALISE_NOTAS_ENEM_MUNICIPIOS_BRASIL_TRATADO_{ano}.csv"
+	caminho_modelo = outdir_tratamento / f"ANALISE_NOTAS_ENEM_MUNICIPIOS_BRASIL_MODELO_{ano}.csv"
+
+	if caminho_tratado.exists() and caminho_modelo.exists():
+		print(f"Dados tratados de {ano} já existem. Pulando etapa de tratamento...\n")
+		df_pre_clustering = pd.read_csv(caminho_tratado)
+		x_scaled = pd.read_csv(caminho_modelo)
+		return df_pre_clustering, x_scaled
+
+	print(f"Carregando dados brutos de {ano}...\n")
+
+	if ano == 2024:
+		arquivo_participantes = INDIR / "PARTICIPANTES_2024.csv"
+		df_participantes_raw = pd.read_csv(arquivo_participantes, sep=';', encoding='latin-1')
+
+		arquivo_resultados = INDIR / "RESULTADOS_2024.csv"
+		df_resultados_raw = pd.read_csv(arquivo_resultados, sep=';', encoding='latin-1')
+
+	elif ano in ARQUIVOS_MICRODADOS:
+		arquivo_microdados = INDIR / ARQUIVOS_MICRODADOS[ano]
+		df_microdados = pd.read_csv(arquivo_microdados, sep=';', encoding='latin-1')
+		df_participantes_raw, df_resultados_raw = separar_dados_participantes_resultados(df_microdados)
+
+	else:
+		raise ValueError("Ano inválido. Por favor, escolha um ano entre 2015 e 2024.")
+
+	print(f"Dados de {ano} carregados com sucesso.\n")
+
+	print(f"Tratando dados de {ano}...\n")
+	df_pre_clustering, x_scaled = tratamento_de_dados(df_participantes_raw, df_resultados_raw, ano)
+	print(f"Dados de {ano} tratados com sucesso.\n")
+
+	print(f"Salvando dados tratados de {ano}...\n")
+	df_pre_clustering.to_csv(caminho_tratado, index=False)
+	print(f"Dados tratados e salvos com sucesso em {caminho_tratado}\n")
+
+	print(f"Salvando dados para modelo de clustering de {ano}...\n")
+	x_scaled.to_csv(caminho_modelo, index=False)
+	print(f"Dados para modelo de clustering salvos com sucesso em {caminho_modelo}\n")
+
+	return df_pre_clustering, x_scaled
+
+
 def tratamento_participantes(df, ano):
 
     if ano == 2024:
