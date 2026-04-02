@@ -16,19 +16,10 @@ def clustering_de_dados(df_pre_clustering, X_scaled):
     df_pos_clustering = df_pre_clustering.copy()
     df_pos_clustering['CLUSTER_ORIGINAL'] = labels
 
-    col_notas = [
-        'NU_NOTA_CN_MEDIA',
-        'NU_NOTA_CH_MEDIA',
-        'NU_NOTA_LC_MEDIA',
-        'NU_NOTA_MT_MEDIA',
-        'NU_NOTA_REDACAO_MEDIA',
-    ]
-
     desempenho_por_cluster = (
         df_pos_clustering
-        .groupby('CLUSTER_ORIGINAL')[col_notas]
+        .groupby('CLUSTER_ORIGINAL')['MEDIA_GERAL']
         .mean()
-        .mean(axis=1)
         .sort_values(ascending=True)
     )
 
