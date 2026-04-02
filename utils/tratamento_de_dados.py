@@ -127,6 +127,8 @@ def tratamento_resultado(df):
     NU_NOTA_REDACAO_MEDIA=('NU_NOTA_REDACAO', 'mean')
     ).reset_index()
     
+    df_resultado['MEDIA_GERAL'] = df_resultado[['NU_NOTA_CN_MEDIA', 'NU_NOTA_CH_MEDIA', 'NU_NOTA_LC_MEDIA', 'NU_NOTA_MT_MEDIA', 'NU_NOTA_REDACAO_MEDIA']].mean(axis=1)  
+
     return df_resultado
 
 def tratamento_clustering(df_municipio, df_resultado):
@@ -140,7 +142,7 @@ def tratamento_clustering(df_municipio, df_resultado):
 
     X_scaled = X_scaled.drop(columns=['NO_MUNICIPIO_PROVA', 'RENDA_FAMILIAR_SM_MEDIA', 'UF', 'QTD_PARTICIPANTES'])
 
-    col_scatter = ['NU_NOTA_CN_MEDIA', 'NU_NOTA_CH_MEDIA', 'NU_NOTA_LC_MEDIA', 'NU_NOTA_MT_MEDIA', 'NU_NOTA_REDACAO_MEDIA']
+    col_scatter = ['NU_NOTA_CN_MEDIA', 'NU_NOTA_CH_MEDIA', 'NU_NOTA_LC_MEDIA', 'NU_NOTA_MT_MEDIA', 'NU_NOTA_REDACAO_MEDIA', 'MEDIA_GERAL']
     scaler = StandardScaler()
     X_scaled[col_scatter] = scaler.fit_transform(X_scaled[col_scatter])
 
