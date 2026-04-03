@@ -23,6 +23,15 @@ ANOS_DISPONIVEIS = list(range(2015, 2025))
 
 
 def separar_dados_participantes_resultados(df_microdados):
+	"""Separa microdados anuais em dataframes de participantes e resultados.
+
+	Args:
+		df_microdados: DataFrame bruto com colunas de participantes e notas.
+
+	Returns:
+		Tupla contendo dataframe de participantes e dataframe de resultados.
+	"""
+
 	df_participantes = df_microdados[['IN_TREINEIRO', 'SG_UF_PROVA', 'Q006', 'NO_MUNICIPIO_PROVA']]
 	df_resultado = df_microdados[['SG_UF_PROVA', 'NO_MUNICIPIO_PROVA', 'TP_PRESENCA_CN', 'TP_PRESENCA_CH', 'TP_PRESENCA_LC', 'TP_PRESENCA_MT', 'NU_NOTA_CN', 'NU_NOTA_CH', 'NU_NOTA_LC', 'NU_NOTA_MT', 'NU_NOTA_REDACAO' ]]
 
@@ -30,12 +39,23 @@ def separar_dados_participantes_resultados(df_microdados):
 
 
 def preparar_diretorios() -> None:
+	"""Cria os diretorios de saida usados no pipeline, se necessario."""
+
 	OUTDIR_TRATAMENTO_BASE.mkdir(parents=True, exist_ok=True)
 	OUTDIR_MODELO.mkdir(parents=True, exist_ok=True)
 	OUTDIR_REPORT.mkdir(parents=True, exist_ok=True)
 
 
 def caminhos_processados(ano: int):
+	"""Monta os caminhos de saida para dados tratados e modelo de um ano.
+
+	Args:
+		ano: Ano de referencia do processamento.
+
+	Returns:
+		Tupla com caminho do csv tratado e caminho do csv do modelo.
+	"""
+
 	outdir_tratamento = OUTDIR_TRATAMENTO_BASE / str(ano)
 	outdir_tratamento.mkdir(parents=True, exist_ok=True)
 
@@ -46,11 +66,32 @@ def caminhos_processados(ano: int):
 
 
 def arquivos_processados_existem(ano: int) -> bool:
+	"""Verifica se os arquivos de saida do ano ja foram gerados.
+
+	Args:
+		ano: Ano de referencia do processamento.
+
+	Returns:
+		True quando ambos os arquivos esperados existem; caso contrario, False.
+	"""
+
 	caminho_tratado, caminho_modelo = caminhos_processados(ano)
 	return caminho_tratado.exists() and caminho_modelo.exists()
 
 
 def carregar_dados_brutos(ano: int):
+	"""Carrega dados brutos do ENEM para o ano informado.
+
+	Args:
+		ano: Ano de referencia entre 2015 e 2024.
+
+	Returns:
+		Tupla com dataframes de participantes e resultados brutos.
+
+	Raises:
+		ValueError: Quando o ano informado nao e suportado.
+	"""
+
 	if ano == 2024:
 		arquivo_participantes = INDIR / "PARTICIPANTES_2024.csv"
 		df_participantes_raw = pd.read_csv(arquivo_participantes, sep=';', encoding='latin-1')

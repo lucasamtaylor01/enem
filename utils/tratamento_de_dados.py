@@ -12,53 +12,79 @@ from utils.carregamento_dados import (
 preparar_diretorios()
 
 def carregar_ou_tratar_dados(ano: int):
-	outdir_tratamento = OUTDIR_TRATAMENTO_BASE / str(ano)
-	outdir_tratamento.mkdir(parents=True, exist_ok=True)
+    """Carrega dados tratados do ano informado ou executa todo o tratamento.
 
-	caminho_tratado = outdir_tratamento / f"ANALISE_NOTAS_ENEM_MUNICIPIOS_BRASIL_TRATADO_{ano}.csv"
-	caminho_modelo = outdir_tratamento / f"ANALISE_NOTAS_ENEM_MUNICIPIOS_BRASIL_MODELO_{ano}.csv"
+    Args:
+        ano: Ano de referencia entre 2015 e 2024.
 
-	if caminho_tratado.exists() and caminho_modelo.exists():
-		print(f"Dados tratados de {ano} já existem. Pulando etapa de tratamento...\n")
-		df_pre_clustering = pd.read_csv(caminho_tratado)
-		x_scaled = pd.read_csv(caminho_modelo)
-		return df_pre_clustering, x_scaled
+    Returns:
+        Tupla contendo o dataframe pre-clustering e o dataframe escalonado
+        para o modelo de clustering.
 
-	print(f"Carregando dados brutos de {ano}...\n")
+    Raises:
+        ValueError: Quando o ano informado nao e suportado.
+    """
 
-	if ano == 2024:
-		arquivo_participantes = INDIR / "PARTICIPANTES_2024.csv"
-		df_participantes_raw = pd.read_csv(arquivo_participantes, sep=';', encoding='latin-1')
+    outdir_tratamento = OUTDIR_TRATAMENTO_BASE / str(ano)
+    outdir_tratamento.mkdir(parents=True, exist_ok=True)
 
-		arquivo_resultados = INDIR / "RESULTADOS_2024.csv"
-		df_resultados_raw = pd.read_csv(arquivo_resultados, sep=';', encoding='latin-1')
+    caminho_tratado = outdir_tratamento / f"ANALISE_NOTAS_ENEM_MUNICIPIOS_BRASIL_TRATADO_{ano}.csv"
+    caminho_modelo = outdir_tratamento / f"ANALISE_NOTAS_ENEM_MUNICIPIOS_BRASIL_MODELO_{ano}.csv"
 
-	elif ano in ARQUIVOS_MICRODADOS:
-		arquivo_microdados = INDIR / ARQUIVOS_MICRODADOS[ano]
-		df_microdados = pd.read_csv(arquivo_microdados, sep=';', encoding='latin-1')
-		df_participantes_raw, df_resultados_raw = separar_dados_participantes_resultados(df_microdados)
+    # Verifica se os dados tratados e o modelo de clustering já existem. 
+    # Se existirem, carrega os dados e retorna.
+    # Caso contrário, realiza o tratamento dos dados, salva os arquivos e retorna os dados tratados e o modelo de clustering.
 
-	else:
-		raise ValueError("Ano inválido. Por favor, escolha um ano entre 2015 e 2024.")
+    if caminho_tratado.exists() and caminho_modelo.exists():
+        print(f"Dados tratados de {ano} ja existem. Pulando etapa de tratamento...\n")
+        df_pre_clustering = pd.read_csv(caminho_tratado)
+        x_scaled = pd.read_csv(caminho_modelo)
+        return df_pre_clustering, x_scaled
 
-	print(f"Dados de {ano} carregados com sucesso.\n")
+    print(f"Carregando dados brutos de {ano}...\n")
 
-	print(f"Tratando dados de {ano}...\n")
-	df_pre_clustering, x_scaled = tratamento_de_dados(df_participantes_raw, df_resultados_raw, ano)
-	print(f"Dados de {ano} tratados com sucesso.\n")
+    if ano == 2024:
+        arquivo_participantes = INDIR / "PARTICIPANTES_2024.csv"
+        df_participantes_raw = pd.read_csv(arquivo_participantes, sep=';', encoding='latin-1')
 
-	print(f"Salvando dados tratados de {ano}...\n")
-	df_pre_clustering.to_csv(caminho_tratado, index=False)
-	print(f"Dados tratados e salvos com sucesso em {caminho_tratado}\n")
+        arquivo_resultados = INDIR / "RESULTADOS_2024.csv"
+        df_resultados_raw = pd.read_csv(arquivo_resultados, sep=';', encoding='latin-1')
 
-	print(f"Salvando dados para modelo de clustering de {ano}...\n")
-	x_scaled.to_csv(caminho_modelo, index=False)
-	print(f"Dados para modelo de clustering salvos com sucesso em {caminho_modelo}\n")
+    elif ano in ARQUIVOS_MICRODADOS:
+        arquivo_microdados = INDIR / ARQUIVOS_MICRODADOS[ano]
+        df_microdados = pd.read_csv(arquivo_microdados, sep=';', encoding='latin-1')
+        df_participantes_raw, df_resultados_raw = separar_dados_participantes_resultados(df_microdados)
 
-	return df_pre_clustering, x_scaled
+    else:
+        raise ValueError("Ano invalido. Por favor, escolha um ano entre 2015 e 2024.")
+
+    print(f"Dados de {ano} carregados com sucesso.\n")
+
+    print(f"Tratando dados de {ano}...\n")
+    df_pre_clustering, x_scaled = tratamento_de_dados(df_participantes_raw, df_resultados_raw, ano)
+    print(f"Dados de {ano} tratados com sucesso.\n")
+
+    print(f"Salvando dados tratados de {ano}...\n")
+    df_pre_clustering.to_csv(caminho_tratado, index=False)
+    print(f"Dados tratados e salvos com sucesso em {caminho_tratado}\n")
+
+    print(f"Salvando dados para modelo de clustering de {ano}...\n")
+    x_scaled.to_csv(caminho_modelo, index=False)
+    print(f"Dados para modelo de clustering salvos com sucesso em {caminho_modelo}\n")
+
+    return df_pre_clustering, x_scaled
 
 
 def tratamento_participantes(df, ano):
+    """Limpa e agrega os dados dos participantes por municipio.
+
+    Args:
+        df: DataFrame bruto de participantes.
+        ano: Ano de referencia para selecionar a coluna de renda correta.
+
+    Returns:
+        DataFrame com renda familiar media em salarios minimos por municipio.
+    """
 
     if ano == 2024:
         df_participantes = df[['IN_TREINEIRO', 'SG_UF_PROVA', 'Q007', 'NO_MUNICIPIO_PROVA']]
@@ -106,6 +132,16 @@ def tratamento_participantes(df, ano):
     return df_municipio
 
 def tratamento_resultado(df):
+    """Filtra presenca valida e calcula medias de notas por municipio.
+
+    Args:
+        df: DataFrame bruto com resultados individuais dos participantes.
+
+    Returns:
+        DataFrame agregado por municipio com quantidade de participantes,
+        medias por area e media geral.
+    """
+
     df_resultado = df[['SG_UF_PROVA', 'NO_MUNICIPIO_PROVA', 'TP_PRESENCA_CN', 'TP_PRESENCA_CH', 'TP_PRESENCA_LC', 'TP_PRESENCA_MT', 'NU_NOTA_CN', 'NU_NOTA_CH', 'NU_NOTA_LC', 'NU_NOTA_MT', 'NU_NOTA_REDACAO' ]]
     
     df_resultado = df_resultado[df_resultado['TP_PRESENCA_CN'] == 1]
@@ -132,6 +168,17 @@ def tratamento_resultado(df):
     return df_resultado
 
 def tratamento_clustering(df_municipio, df_resultado):
+    """Combina dados por municipio e padroniza variaveis para clustering.
+
+    Args:
+        df_municipio: DataFrame com indicadores de renda por municipio.
+        df_resultado: DataFrame com indicadores de desempenho por municipio.
+
+    Returns:
+        Tupla com dataframe completo pre-clustering e dataframe de features
+        padronizadas para o modelo.
+    """
+
     df_pre_clustering = df_resultado.merge(
     df_municipio,
     on='NO_MUNICIPIO_PROVA',
@@ -150,6 +197,17 @@ def tratamento_clustering(df_municipio, df_resultado):
 
 
 def tratamento_de_dados(df_participantes_raw, df_resultado_raw, ano):
+    """Executa o fluxo completo de tratamento para um ano especifico.
+
+    Args:
+        df_participantes_raw: DataFrame bruto de participantes.
+        df_resultado_raw: DataFrame bruto de resultados.
+        ano: Ano de referencia para regras especificas de tratamento.
+
+    Returns:
+        Tupla com os dados pre-clustering e as features escalonadas.
+    """
+
     df_participantes = tratamento_participantes(df_participantes_raw, ano)
     df_resultado = tratamento_resultado(df_resultado_raw)
     df_pre_clustering, X_scaled = tratamento_clustering(df_participantes, df_resultado)
@@ -157,6 +215,15 @@ def tratamento_de_dados(df_participantes_raw, df_resultado_raw, ano):
     return df_pre_clustering, X_scaled
 
 def separar_dados_participantes_resultados(df_microdados):
+    """Separa o dataframe de microdados em participantes e resultados.
+
+    Args:
+        df_microdados: DataFrame bruto anual com todas as colunas relevantes.
+
+    Returns:
+        Tupla contendo dataframe de participantes e dataframe de resultados.
+    """
+
     df_participantes = df_microdados[['IN_TREINEIRO', 'SG_UF_PROVA', 'Q006', 'NO_MUNICIPIO_PROVA']]
     df_resultado = df_microdados[['SG_UF_PROVA', 'NO_MUNICIPIO_PROVA', 'TP_PRESENCA_CN', 'TP_PRESENCA_CH', 'TP_PRESENCA_LC', 'TP_PRESENCA_MT', 'NU_NOTA_CN', 'NU_NOTA_CH', 'NU_NOTA_LC', 'NU_NOTA_MT', 'NU_NOTA_REDACAO' ]]
 

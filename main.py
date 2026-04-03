@@ -6,9 +6,6 @@ from utils.carregamento_dados import (
 	ANOS_DISPONIVEIS,
 )
 
-# -----------------------------------------
-# EXECUÇÃO
-# -----------------------------------------
 entrada = input("Digite o ano para análise (2015-2024) ou 'todos': ").strip().lower()
 
 if entrada == "todos":

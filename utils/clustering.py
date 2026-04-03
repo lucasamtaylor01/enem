@@ -9,6 +9,17 @@ from utils.tratamento_de_dados import carregar_ou_tratar_dados
 
 
 def clustering_de_dados(df_pre_clustering, X_scaled):
+    """Executa KMeans e organiza os clusters por desempenho medio.
+
+    Args:
+        df_pre_clustering: DataFrame com dados agregados por municipio.
+        X_scaled: DataFrame com features padronizadas para o modelo.
+
+    Returns:
+        Tupla com dataframe pos-clustering por municipio e resumo agregado
+        das metricas por cluster.
+    """
+
     kmeans = KMeans(n_clusters=3, n_init=200, random_state=0)
     kmeans.fit(X_scaled)
 
@@ -52,6 +63,12 @@ def clustering_de_dados(df_pre_clustering, X_scaled):
 
 
 def processar_ano(ano: int):
+    """Processa um ano completo: tratamento, clustering e exportacao.
+
+    Args:
+        ano: Ano de referencia a ser processado.
+    """
+
     print(f"Iniciando processamento do ano {ano}...\n")
     df_pre_clustering, x_scaled = carregar_ou_tratar_dados(ano)
 
@@ -69,5 +86,7 @@ def processar_ano(ano: int):
 
 
 def rodar_todos_os_anos():
+    """Executa o pipeline de clustering para todos os anos disponiveis."""
+
     for ano in ANOS_DISPONIVEIS:
         processar_ano(ano)
