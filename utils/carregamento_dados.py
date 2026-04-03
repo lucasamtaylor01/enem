@@ -47,13 +47,13 @@ def preparar_diretorios() -> None:
 
 
 def caminhos_processados(ano: int):
-	"""Monta os caminhos de saida para dados tratados e modelo de um ano.
+	"""Monta os caminhos de saida por municipio para um ano.
 
 	Args:
 		ano: Ano de referencia do processamento.
 
 	Returns:
-		Tupla com caminho do csv tratado e caminho do csv do modelo.
+		Tupla com caminho do csv tratado e caminho do csv do modelo por municipio.
 	"""
 
 	outdir_tratamento = OUTDIR_TRATAMENTO_BASE / str(ano)
@@ -63,6 +63,33 @@ def caminhos_processados(ano: int):
 	caminho_modelo = outdir_tratamento / f"ANALISE_NOTAS_ENEM_MUNICIPIOS_BRASIL_MODELO_{ano}.csv"
 
 	return caminho_tratado, caminho_modelo
+
+
+def caminhos_processados_tratamento(ano: int):
+	"""Monta todos os caminhos de saida do tratamento para um ano.
+
+	Args:
+		ano: Ano de referencia do processamento.
+
+	Returns:
+		Tupla com os caminhos, nesta ordem:
+		1) tratado por municipio,
+		2) modelo por municipio,
+		3) tratado por UF,
+		4) modelo por UF.
+	"""
+
+	caminho_tratado_municipio, caminho_modelo_municipio = caminhos_processados(ano)
+	outdir_tratamento = caminho_tratado_municipio.parent
+	caminho_tratado_uf = outdir_tratamento / f"ANALISE_NOTAS_ENEM_UF_BRASIL_TRATADO_{ano}.csv"
+	caminho_modelo_uf = outdir_tratamento / f"ANALISE_NOTAS_ENEM_UF_BRASIL_MODELO_{ano}.csv"
+
+	return (
+		caminho_tratado_municipio,
+		caminho_modelo_municipio,
+		caminho_tratado_uf,
+		caminho_modelo_uf,
+	)
 
 
 def arquivos_processados_existem(ano: int) -> bool:
@@ -77,6 +104,34 @@ def arquivos_processados_existem(ano: int) -> bool:
 
 	caminho_tratado, caminho_modelo = caminhos_processados(ano)
 	return caminho_tratado.exists() and caminho_modelo.exists()
+
+
+def arquivos_processados_tratamento_existem(ano: int) -> bool:
+	"""Verifica se todos os arquivos do tratamento do ano ja foram gerados.
+
+	Args:
+		ano: Ano de referencia do processamento.
+
+	Returns:
+		True quando todos os arquivos esperados existem; caso contrario, False.
+	"""
+
+	(
+		caminho_tratado_municipio,
+		caminho_modelo_municipio,
+		caminho_tratado_uf,
+		caminho_modelo_uf,
+	) = caminhos_processados_tratamento(ano)
+
+	return all(
+		caminho.exists()
+		for caminho in (
+			caminho_tratado_municipio,
+			caminho_modelo_municipio,
+			caminho_tratado_uf,
+			caminho_modelo_uf,
+		)
+	)
 
 
 def carregar_dados_brutos(ano: int):
