@@ -19,7 +19,7 @@ ARQUIVOS_MICRODADOS = {
 	2015: "MICRODADOS_ENEM_2015.csv",
 }
 
-ANOS_DISPONIVEIS = list(range(2015, 2025))
+ANOS_DISPONIVEIS = list(range(2015, 2024)) # Tirando 2024, por enquanto
 
 
 def separar_dados_participantes_resultados(df_microdados):
