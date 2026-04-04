@@ -222,7 +222,7 @@ def tratamento_resultado(df_resultado_raw):
         .reset_index()
     )
 
-    df_resultado["MEDIA_GERAL"] = df_resultado[
+    df_resultado["NOTA_GERAL_MEDIA"] = df_resultado[
         [
             "NOTA_CN_MEDIA",
             "NOTA_CH_MEDIA",
@@ -258,7 +258,7 @@ def tratamento_clustering(df_municipio, df_resultado):
             "RENDA_FAMILIAR_SM_MEDIA",
             "UF",
             "QTD_PARTICIPANTES",
-            "MEDIA_GERAL",
+            "NOTA_GERAL_MEDIA",
         ],
     )
 
@@ -268,7 +268,7 @@ def tratamento_clustering(df_municipio, df_resultado):
 def agrupar_por_uf(df_pre_clustering_municipio):
     """Agrupa os dados municipais por UF usando medias ponderadas por participantes."""
 
-    colunas_notas_media = [*COLUNAS_NOTAS_CLUSTERING, "MEDIA_GERAL"]
+    colunas_notas_media = [*COLUNAS_NOTAS_CLUSTERING, "NOTA_GERAL_MEDIA"]
 
     return (
         df_pre_clustering_municipio.groupby("UF")
@@ -339,7 +339,7 @@ def tratamento_de_dados(df_participantes_raw, df_resultado_raw, ano):
     df_pre_clustering_uf = agrupar_por_uf(df_pre_clustering_municipio)
     x_scaled_uf = escalar_features_clustering(
         df_pre_clustering_uf,
-        ["UF", "RENDA_FAMILIAR_SM_MEDIA", "QTD_PARTICIPANTES", "MEDIA_GERAL"],
+        ["UF", "RENDA_FAMILIAR_SM_MEDIA", "QTD_PARTICIPANTES", "NOTA_GERAL_MEDIA"],
     )
 
     return (

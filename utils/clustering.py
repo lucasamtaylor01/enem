@@ -29,7 +29,7 @@ def clustering_de_dados(df_pre_clustering, x_scaled, coluna_identificacao="MUNIC
     df_pos_clustering["CLUSTER_ORIGINAL"] = labels
 
     desempenho_por_cluster = (
-        df_pos_clustering.groupby("CLUSTER_ORIGINAL")["MEDIA_GERAL"]
+        df_pos_clustering.groupby("CLUSTER_ORIGINAL")["NOTA_GERAL_MEDIA"]
         .mean()
         .sort_values(ascending=True)
     )
