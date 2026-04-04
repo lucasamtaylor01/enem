@@ -3,16 +3,6 @@ from sklearn.preprocessing import StandardScaler
 
 import pandas as pd
 
-from utils.carregamento_dados import (
-    ARQUIVOS_MICRODADOS,
-    INDIR,
-    arquivos_processados_tratamento_existem,
-    caminhos_processados_tratamento,
-    preparar_diretorios,
-)
-
-preparar_diretorios()
-
 COLUNAS_NOTAS_CLUSTERING = [
     "NOTA_CN_MEDIA",
     "NOTA_CH_MEDIA",
@@ -20,105 +10,22 @@ COLUNAS_NOTAS_CLUSTERING = [
     "NOTA_MT_MEDIA",
     "NOTA_REDACAO_MEDIA",
 ]
-
-
-def carregar_ou_tratar_dados(ano: int):
-    """Carrega dados tratados do ano informado ou executa todo o tratamento.
+def tratamento_participantes(df_participantes_raw, ano):
+    """Filtra participantes validos e calcula renda media familiar por municipio.
 
     Args:
-        ano: Ano de referencia entre 2015 e 2023.
+        df_participantes_raw: DataFrame bruto com dados de participantes.
+        ano: Ano de referencia para tratar diferencas de schema entre edicoes.
 
     Returns:
-        Tupla contendo, nesta ordem:
-        1) dataframe pre-clustering por municipio,
-        2) dataframe escalonado por municipio,
-        3) dataframe pre-clustering por UF,
-        4) dataframe escalonado por UF.
-
-    Raises:
-        ValueError: Quando o ano informado nao e suportado.
+        DataFrame agregado por municipio com a coluna
+        RENDA_FAMILIAR_SM_MEDIA.
     """
 
-    (
-        caminho_tratado_municipio,
-        caminho_modelo_municipio,
-        caminho_tratado_uf,
-        caminho_modelo_uf,
-    ) = caminhos_processados_tratamento(ano)
-
-    # Verifica se os dados tratados e o modelo de clustering já existem.
-    # Se existirem, carrega os dados e retorna.
-    # Caso contrário, realiza o tratamento dos dados, salva os arquivos e retorna os dados tratados e o modelo de clustering.
-
-    if arquivos_processados_tratamento_existem(ano):
-        print(f"Dados tratados de {ano} ja existem. Pulando etapa de tratamento...\n")
-        df_pre_clustering_municipio = pd.read_csv(caminho_tratado_municipio)
-        x_scaled_municipio = pd.read_csv(caminho_modelo_municipio)
-        df_pre_clustering_uf = pd.read_csv(caminho_tratado_uf)
-        x_scaled_uf = pd.read_csv(caminho_modelo_uf)
-        return (
-            df_pre_clustering_municipio,
-            x_scaled_municipio,
-            df_pre_clustering_uf,
-            x_scaled_uf,
-        )
-
-    print(f"Carregando dados brutos de {ano}...\n")
-
-    if ano in ARQUIVOS_MICRODADOS:
-        arquivo_microdados = INDIR / ARQUIVOS_MICRODADOS[ano]
-        df_microdados = pd.read_csv(arquivo_microdados, sep=";", encoding="latin-1")
-        (
-            df_participantes_raw,
-            df_resultados_raw,
-        ) = separar_dados_participantes_resultados(df_microdados)
-
-    else:
-        raise ValueError("Ano invalido. Por favor, escolha um ano entre 2015 e 2023.")
-
-    print(f"Dados de {ano} carregados com sucesso.\n")
-
-    print(f"Tratando dados de {ano}...\n")
-    (
-        df_pre_clustering_municipio,
-        x_scaled_municipio,
-        df_pre_clustering_uf,
-        x_scaled_uf,
-    ) = tratamento_de_dados(df_participantes_raw, df_resultados_raw, ano)
-    print(f"Dados de {ano} tratados com sucesso.\n")
-
-    print(f"Salvando dados tratados por municipio de {ano}...\n")
-    df_pre_clustering_municipio.to_csv(caminho_tratado_municipio, index=False)
-    print(f"Dados tratados e salvos com sucesso em {caminho_tratado_municipio}\n")
-
-    print(f"Salvando dados de modelo por municipio de {ano}...\n")
-    x_scaled_municipio.to_csv(caminho_modelo_municipio, index=False)
-    print(
-        f"Dados para modelo de clustering salvos com sucesso em {caminho_modelo_municipio}\n"
-    )
-
-    print(f"Salvando dados tratados por UF de {ano}...\n")
-    df_pre_clustering_uf.to_csv(caminho_tratado_uf, index=False)
-    print(f"Dados tratados e salvos com sucesso em {caminho_tratado_uf}\n")
-
-    print(f"Salvando dados de modelo por UF de {ano}...\n")
-    x_scaled_uf.to_csv(caminho_modelo_uf, index=False)
-    print(
-        f"Dados para modelo de clustering salvos com sucesso em {caminho_modelo_uf}\n"
-    )
-
-    return (
-        df_pre_clustering_municipio,
-        x_scaled_municipio,
-        df_pre_clustering_uf,
-        x_scaled_uf,
-    )
-
-
-def tratamento_participantes(df_participantes_raw, ano):
     df_participantes = df_participantes_raw[
-        ["IN_TREINEIRO", "SG_UF_PROVA", "Q006", "NO_MUNICIPIO_PROVA"]
-    ]
+            ["IN_TREINEIRO", "SG_UF_PROVA", "Q006", "NO_MUNICIPIO_PROVA"]
+        ]
+
     df_participantes = df_participantes.rename(
         columns={"NO_MUNICIPIO_PROVA": "MUNICIPIO"}
     )
@@ -392,6 +299,17 @@ def escalar_features_clustering(df_pre_clustering, colunas_excluir):
 
 
 def media_ponderada(grupo, coluna, peso="QTD_PARTICIPANTES"):
+    """Calcula a media ponderada de uma coluna usando o peso informado.
+
+    Args:
+        grupo: DataFrame com valores e pesos.
+        coluna: Nome da coluna numerica a ser agregada.
+        peso: Nome da coluna de pesos usada no calculo.
+
+    Returns:
+        Valor da media ponderada ou pd.NA quando a soma dos pesos e zero.
+    """
+
     d = grupo[[coluna, peso]].dropna()
     soma_pesos = d[peso].sum()
     return (d[coluna] * d[peso]).sum() / soma_pesos if soma_pesos != 0 else pd.NA

@@ -5,7 +5,7 @@ from utils.carregamento_dados import (
     OUTDIR_MODELO,
     OUTDIR_REPORT,
 )
-from utils.tratamento_de_dados import carregar_ou_tratar_dados
+from utils.fluxo_dados import carregar_ou_tratar_dados
 
 
 def clustering_de_dados(df_pre_clustering, x_scaled, coluna_identificacao="MUNICIPIO"):
