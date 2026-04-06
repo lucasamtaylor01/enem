@@ -6,7 +6,6 @@ import pandas as pd
 INDIR = Path("data/data_raw")
 OUTDIR_TRATAMENTO_BASE = Path("data/data_processed")
 OUTDIR_MODELO = Path("data/data_model")
-OUTDIR_REPORT = Path("report/csv")
 
 ARQUIVOS_MICRODADOS = {
     2023: "MICRODADOS_ENEM_2023.csv",
@@ -88,7 +87,6 @@ def preparar_diretorios() -> None:
 
     OUTDIR_TRATAMENTO_BASE.mkdir(parents=True, exist_ok=True)
     OUTDIR_MODELO.mkdir(parents=True, exist_ok=True)
-    OUTDIR_REPORT.mkdir(parents=True, exist_ok=True)
 
 
 def caminhos_processados(ano: int) -> Tuple[Path, Path]:

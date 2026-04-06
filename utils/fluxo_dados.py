@@ -15,9 +15,7 @@ from utils.tratamento_de_dados import (
 preparar_diretorios()
 
 
-def carregar_ou_tratar_dados(
-    ano: int,
-) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def carregar_ou_tratar_dados(ano: int,) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Orquestra o fluxo entre arquivos, processamento e persistencia anual.
 
     Args:

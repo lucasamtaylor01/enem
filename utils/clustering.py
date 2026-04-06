@@ -1,44 +1,25 @@
-from typing import Tuple
-
 import pandas as pd
 from sklearn.cluster import KMeans
 
-from utils.carregamento_dados import (
-    ANOS_DISPONIVEIS,
-    OUTDIR_MODELO,
-    OUTDIR_REPORT,
-)
+from utils.carregamento_dados import ANOS_DISPONIVEIS, OUTDIR_MODELO
 from utils.fluxo_dados import carregar_ou_tratar_dados
 
 
 def clustering_de_dados(
     df_pre_clustering: pd.DataFrame,
     x_scaled: pd.DataFrame,
-    coluna_identificacao: str = "MUNICIPIO",
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> pd.DataFrame:
     """Executa KMeans e organiza os clusters por desempenho medio.
 
     Args:
         df_pre_clustering: DataFrame agregado para o nivel analisado
             (municipio ou UF), contendo as metricas de notas e renda.
         x_scaled: DataFrame com as features usadas no KMeans.
-        coluna_identificacao: Coluna usada para contagem no resumo.
-            Valores aceitos: "MUNICIPIO" ou "UF".
 
     Returns:
-        Tupla contendo:
-        1) DataFrame pos-clustering com a coluna CLUSTER reordenada por
-           desempenho medio (0 = menor desempenho, 2 = maior desempenho),
-        2) DataFrame de resumo agregado das metricas por cluster.
-
-    Raises:
-        ValueError: Quando coluna_identificacao nao e "MUNICIPIO" nem "UF".
+        DataFrame pos-clustering com a coluna CLUSTER reordenada por
+        desempenho medio (0 = menor desempenho, 2 = maior desempenho).
     """
-
-    if coluna_identificacao not in {"MUNICIPIO", "UF"}:
-        raise ValueError(
-            "coluna_identificacao deve ser 'MUNICIPIO' ou 'UF'."
-        )
 
     kmeans = KMeans(n_clusters=3, n_init=200, random_state=0)
     kmeans.fit(x_scaled)
@@ -63,29 +44,7 @@ def clustering_de_dados(
     )
     df_pos_clustering = df_pos_clustering.drop(columns=["CLUSTER_ORIGINAL"])
 
-    nome_coluna_quantidade = (
-        "QTD_MUNICIPIOS" if coluna_identificacao == "MUNICIPIO" else "QTD_UFS"
-    )
-
-    resumo_clusters = (
-        df_pos_clustering.groupby("CLUSTER")
-        .agg(
-            **{
-                nome_coluna_quantidade: (coluna_identificacao, "count"),
-                "NOTA_CN_MEDIA": ("NOTA_CN_MEDIA", "mean"),
-                "NOTA_CH_MEDIA": ("NOTA_CH_MEDIA", "mean"),
-                "NOTA_LC_MEDIA": ("NOTA_LC_MEDIA", "mean"),
-                "NOTA_MT_MEDIA": ("NOTA_MT_MEDIA", "mean"),
-                "NOTA_REDACAO_MEDIA": ("NOTA_REDACAO_MEDIA", "mean"),
-            },
-            RENDA_FAMILIAR_SM_MEDIA=("RENDA_FAMILIAR_SM_MEDIA", "mean"),
-        )
-        .reset_index()
-        .sort_values("CLUSTER")
-        .reset_index(drop=True)
-    )
-
-    return df_pos_clustering, resumo_clusters
+    return df_pos_clustering
 
 
 def processar_ano(ano: int) -> None:
@@ -104,14 +63,13 @@ def processar_ano(ano: int) -> None:
     ) = carregar_ou_tratar_dados(ano)
 
     print(f"Realizando clustering por municipio para o ano {ano}...\n")
-    df_pos_clustering_municipio, resumo_clusters_municipio = clustering_de_dados(
+    df_pos_clustering_municipio = clustering_de_dados(
         df_pre_clustering_municipio,
         x_scaled_municipio,
     )
     print(f"Clustering por municipio realizado com sucesso para o ano {ano}.\n")
 
     (OUTDIR_MODELO / str(ano)).mkdir(parents=True, exist_ok=True)
-    (OUTDIR_REPORT / str(ano)).mkdir(parents=True, exist_ok=True)
 
     caminho_cluster_municipio = (
         OUTDIR_MODELO
@@ -123,21 +81,10 @@ def processar_ano(ano: int) -> None:
         f"Dados de clustering por municipio salvos com sucesso em {caminho_cluster_municipio}\n"
     )
 
-    caminho_resumo_municipio = (
-        OUTDIR_REPORT
-        / str(ano)
-        / f"ANALISE_NOTAS_ENEM_MUNICIPIOS_BRASIL_RESUMO_CLUSTERS_{ano}.csv"
-    )
-    resumo_clusters_municipio.to_csv(caminho_resumo_municipio, index=False)
-    print(
-        f"Resumo dos clusters por municipio salvo com sucesso em {caminho_resumo_municipio}\n"
-    )
-
     print(f"Realizando clustering por UF para o ano {ano}...\n")
-    df_pos_clustering_uf, resumo_clusters_uf = clustering_de_dados(
+    df_pos_clustering_uf = clustering_de_dados(
         df_pre_clustering_uf,
         x_scaled_uf,
-        coluna_identificacao="UF",
     )
     print(f"Clustering por UF realizado com sucesso para o ano {ano}.\n")
 
@@ -146,14 +93,6 @@ def processar_ano(ano: int) -> None:
     )
     df_pos_clustering_uf.to_csv(caminho_cluster_uf, index=False)
     print(f"Dados de clustering por UF salvos com sucesso em {caminho_cluster_uf}\n")
-
-    caminho_resumo_uf = (
-        OUTDIR_REPORT
-        / str(ano)
-        / f"ANALISE_NOTAS_ENEM_UF_BRASIL_RESUMO_CLUSTERS_{ano}.csv"
-    )
-    resumo_clusters_uf.to_csv(caminho_resumo_uf, index=False)
-    print(f"Resumo dos clusters por UF salvo com sucesso em {caminho_resumo_uf}\n")
 
 
 def rodar_todos_os_anos() -> None:
