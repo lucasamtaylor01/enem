@@ -10,25 +10,21 @@ COLUNAS_NOTAS_CLUSTERING = [
     "NOTA_MT_MEDIA",
     "NOTA_REDACAO_MEDIA",
 ]
-def tratamento_participantes(df_participantes_raw, ano):
+
+def tratamento_participantes(df_participantes_raw):
     """Filtra participantes validos e calcula renda media familiar por municipio.
 
     Args:
         df_participantes_raw: DataFrame bruto com dados de participantes.
-        ano: Ano de referencia para tratar diferencas de schema entre edicoes.
-
     Returns:
         DataFrame agregado por municipio com a coluna
         RENDA_FAMILIAR_SM_MEDIA.
     """
 
-    df_participantes = df_participantes_raw[
-            ["IN_TREINEIRO", "SG_UF_PROVA", "Q006", "NO_MUNICIPIO_PROVA"]
-        ]
 
-    df_participantes = df_participantes.rename(
-        columns={"NO_MUNICIPIO_PROVA": "MUNICIPIO"}
-    )
+    df_participantes = df_participantes_raw.rename(columns={'NO_MUNICIPIO_PROVA': 'MUNICIPIO', 
+                                                    'CO_MUNICIPIO_PROVA': 'COD_MUNICIPIO'})
+
 
     cor_renda_map_sm = {
         "A": 0.0,
@@ -120,8 +116,11 @@ def tratamento_participantes(df_participantes_raw, ano):
     df_participantes = df_participantes.drop(columns=["RENDA_FAMILIAR_SM_LOG"])
 
     df_municipio = (
-        df_participantes.groupby("MUNICIPIO")
-        .agg(RENDA_FAMILIAR_SM_MEDIA=("RENDA_FAMILIAR_SM", "mean"))
+        df_participantes.groupby("COD_MUNICIPIO")
+        .agg(
+            MUNICIPIO=("MUNICIPIO", "first"),
+            RENDA_FAMILIAR_SM_MEDIA=("RENDA_FAMILIAR_SM", "mean"),
+        )
         .reset_index()
     )
 
@@ -139,22 +138,7 @@ def tratamento_resultado(df_resultado_raw):
         medias por area e media geral.
     """
 
-    df_resultado = df_resultado_raw[
-        [
-            "SG_UF_PROVA",
-            "NO_MUNICIPIO_PROVA",
-            "TP_PRESENCA_CN",
-            "TP_PRESENCA_CH",
-            "TP_PRESENCA_LC",
-            "TP_PRESENCA_MT",
-            "NU_NOTA_CN",
-            "NU_NOTA_CH",
-            "NU_NOTA_LC",
-            "NU_NOTA_MT",
-            "NU_NOTA_REDACAO",
-        ]
-    ]
-    df_resultado = df_resultado.rename(columns={"NO_MUNICIPIO_PROVA": "MUNICIPIO"})
+    df_resultado = df_resultado_raw.rename(columns={'CO_MUNICIPIO_PROVA': 'COD_MUNICIPIO'})
 
     df_resultado = df_resultado[df_resultado["TP_PRESENCA_CN"] == 1]
     df_resultado = df_resultado[df_resultado["TP_PRESENCA_CH"] == 1]
@@ -164,9 +148,7 @@ def tratamento_resultado(df_resultado_raw):
     df_resultado = df_resultado.drop(
         columns=["TP_PRESENCA_CN", "TP_PRESENCA_CH", "TP_PRESENCA_LC", "TP_PRESENCA_MT"]
     )
-
-    df_resultado["MUNICIPIO"] = df_resultado["MUNICIPIO"].str.upper()
-
+    
     analise_notas = [
         "NU_NOTA_CN",
         "NU_NOTA_CH",
@@ -208,19 +190,15 @@ def tratamento_resultado(df_resultado_raw):
 
     df_resultado = df_tratamento_outlier.copy()
 
-    df_resultado = (
-        df_resultado.groupby("MUNICIPIO")
-        .agg(
-            UF=("SG_UF_PROVA", "first"),
-            QTD_PARTICIPANTES=("MUNICIPIO", "size"),
-            NOTA_CN_MEDIA=("NU_NOTA_CN", "mean"),
-            NOTA_CH_MEDIA=("NU_NOTA_CH", "mean"),
-            NOTA_LC_MEDIA=("NU_NOTA_LC", "mean"),
-            NOTA_MT_MEDIA=("NU_NOTA_MT", "mean"),
-            NOTA_REDACAO_MEDIA=("NU_NOTA_REDACAO", "mean"),
-        )
-        .reset_index()
-    )
+    df_resultado = df_resultado.groupby('COD_MUNICIPIO').agg(
+        UF=('SG_UF_PROVA', 'first'),
+        QTD_PARTICIPANTES=('COD_MUNICIPIO', 'size'),
+        NOTA_CN_MEDIA=('NU_NOTA_CN', 'mean'),
+        NOTA_CH_MEDIA=('NU_NOTA_CH', 'mean'),
+        NOTA_LC_MEDIA=('NU_NOTA_LC', 'mean'),
+        NOTA_MT_MEDIA=('NU_NOTA_MT', 'mean'),
+        NOTA_REDACAO_MEDIA=('NU_NOTA_REDACAO', 'mean')
+    ).reset_index()
 
     df_resultado["NOTA_GERAL_MEDIA"] = df_resultado[
         [
@@ -248,13 +226,16 @@ def tratamento_clustering(df_municipio, df_resultado):
     """
 
     df_pre_clustering_municipio = df_resultado.merge(
-        df_municipio, on="MUNICIPIO", how="left"
+        df_municipio,
+        on='COD_MUNICIPIO',
+        how='left'
     )
 
     x_scaled_municipio = escalar_features_clustering(
         df_pre_clustering_municipio,
         [
             "MUNICIPIO",
+            "COD_MUNICIPIO",
             "RENDA_FAMILIAR_SM_MEDIA",
             "UF",
             "QTD_PARTICIPANTES",
@@ -331,7 +312,7 @@ def tratamento_de_dados(df_participantes_raw, df_resultado_raw, ano):
         features escalonadas por UF.
     """
 
-    df_participantes = tratamento_participantes(df_participantes_raw, ano)
+    df_participantes = tratamento_participantes(df_participantes_raw)
     df_resultado = tratamento_resultado(df_resultado_raw)
     df_pre_clustering_municipio, x_scaled_municipio = tratamento_clustering(
         df_participantes, df_resultado
@@ -361,22 +342,19 @@ def separar_dados_participantes_resultados(df_microdados):
     """
 
     df_participantes = df_microdados[
-        ["IN_TREINEIRO", "SG_UF_PROVA", "Q006", "NO_MUNICIPIO_PROVA"]
+        ["NO_MUNICIPIO_PROVA", "CO_MUNICIPIO_PROVA", "IN_TREINEIRO", "SG_UF_PROVA", "Q006"]
     ]
-    df_resultado = df_microdados[
-        [
-            "SG_UF_PROVA",
-            "NO_MUNICIPIO_PROVA",
-            "TP_PRESENCA_CN",
-            "TP_PRESENCA_CH",
-            "TP_PRESENCA_LC",
-            "TP_PRESENCA_MT",
-            "NU_NOTA_CN",
-            "NU_NOTA_CH",
-            "NU_NOTA_LC",
-            "NU_NOTA_MT",
-            "NU_NOTA_REDACAO",
-        ]
-    ]
+
+    df_resultado = df_microdados[['SG_UF_PROVA', 
+                                'CO_MUNICIPIO_PROVA',
+                                'TP_PRESENCA_CN',
+                                'TP_PRESENCA_CH',
+                                'TP_PRESENCA_LC',
+                                'TP_PRESENCA_MT',
+                                'NU_NOTA_CN',
+                                'NU_NOTA_CH',
+                                'NU_NOTA_LC',
+                                'NU_NOTA_MT',
+                                'NU_NOTA_REDACAO']]
 
     return df_participantes, df_resultado
