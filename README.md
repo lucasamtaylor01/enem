@@ -1,6 +1,9 @@
-# Análise de dados Exame Nacional do Ensino Médio (2015-2023)
+# 📄 Análise de dados Exame Nacional do Ensino Médio (ENEM) (2015-2023)
 
 ## 📝 Descrição
+Neste repositório, realizamos o tratamento e a análise das notas do ENEM entre 2015 e 2023 por município e UF.
+
+Aplicamos técnicas de clusterização para agrupar municípios com perfis semelhantes de desempenho, identificando padrões regionais. Além disso, construímos um gráfico de dispersão para analisar a relação entre nota e renda familiar.
 
 ## Instalação
 1. Clone o repositório
@@ -23,7 +26,7 @@
 
 ## ⚠️ Atenção 
 Os dados utilizados neste projeto são públicos e podem ser obtidos diretamente no site oficial do INEP:
-[www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/enem](www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/enem)
+[www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/enem](https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/enem)
 
 Devido ao grande volume desses arquivos, eles não foram incluídos neste repositório do GitHub. Portanto, para executar o código corretamente, é necessário fazer o download dos microdados manualmente a partir do link acima.
 
@@ -39,6 +42,12 @@ Toda colaboração é importante para aprimorar a qualidade, a reprodutibilidade
 
 ## 🔒 Licença
 
-O código deste repositório está licenciado sob os termos da licença MIT.
+O código deste repositório está licenciado sob os termos da [licença MIT](LICENSE).
 
 Os dados, por sua vez, são derivados de fontes públicas do INEP e não estão cobertos pela licença MIT, mantendo-se sob as condições de uso definidas pelo órgão responsável.
+
+## 🤖 Uso ético de IA
+Este projeto foi desenvolvido com a ajuda do [GitHub Copilot](https://github.com/features/copilot).
+
+## 📚 Documentação
+A documentação completa do projeto está disponível na wiki: [https://github.com/lucasamtaylor01/enem/wiki](https://github.com/lucasamtaylor01/enem/wiki)
