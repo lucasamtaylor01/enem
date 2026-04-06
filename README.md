@@ -35,9 +35,7 @@ Contribuições são bem-vindas 😊. Caso encontre erros, inconsistências ou t
 
 ## 🔒 Licença
 
-O código deste repositório está licenciado sob os termos da [licença MIT](LICENSE).
-
-Os dados, por sua vez, são derivados de fontes públicas do INEP e não estão cobertos pela licença MIT, mantendo-se sob as condições de uso definidas pelo órgão responsável.
+O código deste repositório está licenciado sob os termos da [licença MIT](LICENSE). Os dados, por sua vez, são derivados de fontes públicas do INEP e não estão cobertos pela licença MIT, mantendo-se sob as condições de uso definidas pelo órgão responsável.
 
 ## 🤖 Uso ético de IA
 Este projeto foi desenvolvido com a ajuda do [GitHub Copilot](https://github.com/features/copilot).
