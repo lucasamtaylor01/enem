@@ -1,7 +1,11 @@
 import numpy as np
 from sklearn.preprocessing import StandardScaler
+from typing import Sequence, Tuple
 
 import pandas as pd
+from utils.carregamento_dados import (
+    separar_dados_participantes_resultados as separar_dados_participantes_resultados_base,
+)
 
 COLUNAS_NOTAS_CLUSTERING = [
     "NOTA_CN_MEDIA",
@@ -11,14 +15,15 @@ COLUNAS_NOTAS_CLUSTERING = [
     "NOTA_REDACAO_MEDIA",
 ]
 
-def tratamento_participantes(df_participantes_raw):
+def tratamento_participantes(df_participantes_raw: pd.DataFrame) -> pd.DataFrame:
     """Filtra participantes validos e calcula renda media familiar por municipio.
 
     Args:
         df_participantes_raw: DataFrame bruto com dados de participantes.
+
     Returns:
-        DataFrame agregado por municipio com a coluna
-        RENDA_FAMILIAR_SM_MEDIA.
+        DataFrame agregado por municipio com as colunas:
+        COD_MUNICIPIO, MUNICIPIO e RENDA_FAMILIAR_SM_MEDIA.
     """
 
 
@@ -127,7 +132,7 @@ def tratamento_participantes(df_participantes_raw):
     return df_municipio
 
 
-def tratamento_resultado(df_resultado_raw):
+def tratamento_resultado(df_resultado_raw: pd.DataFrame) -> pd.DataFrame:
     """Filtra presenca valida e calcula medias de notas por municipio.
 
     Args:
@@ -213,7 +218,10 @@ def tratamento_resultado(df_resultado_raw):
     return df_resultado
 
 
-def tratamento_clustering(df_municipio, df_resultado):
+def tratamento_clustering(
+    df_municipio: pd.DataFrame,
+    df_resultado: pd.DataFrame,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Combina dados por municipio e padroniza variaveis para clustering.
 
     Args:
@@ -246,8 +254,16 @@ def tratamento_clustering(df_municipio, df_resultado):
     return df_pre_clustering_municipio, x_scaled_municipio
 
 
-def agrupar_por_uf(df_pre_clustering_municipio):
-    """Agrupa os dados municipais por UF usando medias ponderadas por participantes."""
+def agrupar_por_uf(df_pre_clustering_municipio: pd.DataFrame) -> pd.DataFrame:
+    """Agrupa os dados municipais por UF usando medias ponderadas por participantes.
+
+    Args:
+        df_pre_clustering_municipio: DataFrame pre-clustering no nivel municipal.
+
+    Returns:
+        DataFrame agregado por UF com total de participantes, renda media e
+        medias ponderadas de notas.
+    """
 
     colunas_notas_media = [*COLUNAS_NOTAS_CLUSTERING, "NOTA_GERAL_MEDIA"]
 
@@ -268,8 +284,19 @@ def agrupar_por_uf(df_pre_clustering_municipio):
     )
 
 
-def escalar_features_clustering(df_pre_clustering, colunas_excluir):
-    """Padroniza apenas as colunas de notas para uso no clustering."""
+def escalar_features_clustering(
+    df_pre_clustering: pd.DataFrame,
+    colunas_excluir: Sequence[str],
+) -> pd.DataFrame:
+    """Prepara features para clustering removendo metadados e escalando notas.
+
+    Args:
+        df_pre_clustering: DataFrame com variaveis numericas e metadados.
+        colunas_excluir: Colunas removidas antes da etapa de escalonamento.
+
+    Returns:
+        DataFrame com as features de notas padronizadas por StandardScaler.
+    """
 
     x_scaled = df_pre_clustering.drop(columns=colunas_excluir).copy()
     scaler = StandardScaler()
@@ -279,7 +306,11 @@ def escalar_features_clustering(df_pre_clustering, colunas_excluir):
     return x_scaled
 
 
-def media_ponderada(grupo, coluna, peso="QTD_PARTICIPANTES"):
+def media_ponderada(
+    grupo: pd.DataFrame,
+    coluna: str,
+    peso: str = "QTD_PARTICIPANTES",
+) -> float | object:
     """Calcula a media ponderada de uma coluna usando o peso informado.
 
     Args:
@@ -296,21 +327,27 @@ def media_ponderada(grupo, coluna, peso="QTD_PARTICIPANTES"):
     return (d[coluna] * d[peso]).sum() / soma_pesos if soma_pesos != 0 else pd.NA
 
 
-def tratamento_de_dados(df_participantes_raw, df_resultado_raw, ano):
+def tratamento_de_dados(
+    df_participantes_raw: pd.DataFrame,
+    df_resultado_raw: pd.DataFrame,
+    ano: int,
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Executa o fluxo completo de tratamento para um ano especifico.
 
     Args:
         df_participantes_raw: DataFrame bruto de participantes.
         df_resultado_raw: DataFrame bruto de resultados.
-        ano: Ano de referencia para regras especificas de tratamento.
+        ano: Ano de referencia do processamento.
 
     Returns:
         Tupla com 4 saidas, nesta ordem:
-        dados pre-clustering por municipio,
-        features escalonadas por municipio,
-        dados pre-clustering por UF,
-        features escalonadas por UF.
+        1) dados pre-clustering por municipio,
+        2) features escalonadas por municipio,
+        3) dados pre-clustering por UF,
+        4) features escalonadas por UF.
     """
+
+    _ = ano
 
     df_participantes = tratamento_participantes(df_participantes_raw)
     df_resultado = tratamento_resultado(df_resultado_raw)
@@ -331,30 +368,20 @@ def tratamento_de_dados(df_participantes_raw, df_resultado_raw, ano):
     )
 
 
-def separar_dados_participantes_resultados(df_microdados):
-    """Separa o dataframe de microdados em participantes e resultados.
+def separar_dados_participantes_resultados(
+    df_microdados: pd.DataFrame,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Encaminha a separacao de microdados para a implementacao canonica.
 
     Args:
         df_microdados: DataFrame bruto anual com todas as colunas relevantes.
 
     Returns:
-        Tupla contendo dataframe de participantes e dataframe de resultados.
+        Tupla contendo DataFrame de participantes e DataFrame de resultados.
+
+    Notes:
+        Mantida por compatibilidade para chamadas antigas deste modulo.
+        A logica efetiva esta centralizada em utils.carregamento_dados.
     """
 
-    df_participantes = df_microdados[
-        ["NO_MUNICIPIO_PROVA", "CO_MUNICIPIO_PROVA", "IN_TREINEIRO", "SG_UF_PROVA", "Q006"]
-    ]
-
-    df_resultado = df_microdados[['SG_UF_PROVA', 
-                                'CO_MUNICIPIO_PROVA',
-                                'TP_PRESENCA_CN',
-                                'TP_PRESENCA_CH',
-                                'TP_PRESENCA_LC',
-                                'TP_PRESENCA_MT',
-                                'NU_NOTA_CN',
-                                'NU_NOTA_CH',
-                                'NU_NOTA_LC',
-                                'NU_NOTA_MT',
-                                'NU_NOTA_REDACAO']]
-
-    return df_participantes, df_resultado
+    return separar_dados_participantes_resultados_base(df_microdados)

@@ -6,20 +6,27 @@ from utils.carregamento_dados import (
     ANOS_DISPONIVEIS,
 )
 
-def main():
-	entrada = input("Digite o ano para análise (2015-2023) ou 'todos': ").strip().lower()
 
-	if entrada == "todos":
-		rodar_todos_os_anos()
-	else:
-		try:
-			ano_escolhido = int(entrada)
-			if ano_escolhido not in ANOS_DISPONIVEIS:
-				raise ValueError
-			processar_ano(ano_escolhido)
-		except ValueError:
-			print("Entrada inválida. Digite um ano entre 2015 e 2023 ou 'todos'.")
+def main() -> None:
+    """Executa o ponto de entrada interativo do pipeline.
+
+    Solicita um ano especifico (2015-2023) ou a palavra "todos" e
+    encaminha a execucao para o processamento correspondente.
+    """
+
+    entrada = input("Digite o ano para análise (2015-2023) ou 'todos': ").strip().lower()
+
+    if entrada == "todos":
+        rodar_todos_os_anos()
+    else:
+        try:
+            ano_escolhido = int(entrada)
+            if ano_escolhido not in ANOS_DISPONIVEIS:
+                raise ValueError
+            processar_ano(ano_escolhido)
+        except ValueError:
+            print("Entrada inválida. Digite um ano entre 2015 e 2023 ou 'todos'.")
 
 
 if __name__ == "__main__":
-	main()
+    main()

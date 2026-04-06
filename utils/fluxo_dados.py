@@ -1,21 +1,23 @@
+from typing import Tuple
+
 import pandas as pd
 
 from utils.carregamento_dados import (
-    ARQUIVOS_MICRODADOS,
-    INDIR,
     arquivos_processados_tratamento_existem,
+    carregar_dados_brutos,
     caminhos_processados_tratamento,
     preparar_diretorios,
 )
 from utils.tratamento_de_dados import (
-    separar_dados_participantes_resultados,
     tratamento_de_dados,
 )
 
 preparar_diretorios()
 
 
-def carregar_ou_tratar_dados(ano: int):
+def carregar_ou_tratar_dados(
+    ano: int,
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Orquestra o fluxo entre arquivos, processamento e persistencia anual.
 
     Args:
@@ -23,10 +25,10 @@ def carregar_ou_tratar_dados(ano: int):
 
     Returns:
         Tupla contendo, nesta ordem:
-        1) dataframe pre-clustering por municipio,
-        2) dataframe escalonado por municipio,
-        3) dataframe pre-clustering por UF,
-        4) dataframe escalonado por UF.
+        1) DataFrame pre-clustering por municipio,
+        2) DataFrame escalonado por municipio,
+        3) DataFrame pre-clustering por UF,
+        4) DataFrame escalonado por UF.
 
     Raises:
         ValueError: Quando o ano informado nao e suportado.
@@ -53,16 +55,7 @@ def carregar_ou_tratar_dados(ano: int):
         )
 
     print(f"Carregando dados brutos de {ano}...\n")
-
-    if ano in ARQUIVOS_MICRODADOS:
-        arquivo_microdados = INDIR / ARQUIVOS_MICRODADOS[ano]
-        df_microdados = pd.read_csv(arquivo_microdados, sep=";", encoding="latin-1")
-        (
-            df_participantes_raw,
-            df_resultados_raw,
-        ) = separar_dados_participantes_resultados(df_microdados)
-    else:
-        raise ValueError("Ano invalido. Por favor, escolha um ano entre 2015 e 2023.")
+    df_participantes_raw, df_resultados_raw = carregar_dados_brutos(ano)
 
     print(f"Dados de {ano} carregados com sucesso.\n")
 

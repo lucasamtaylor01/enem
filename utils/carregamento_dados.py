@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Tuple
 
 import pandas as pd
 
@@ -21,23 +22,51 @@ ARQUIVOS_MICRODADOS = {
 
 ANOS_DISPONIVEIS = list(range(2015, 2024))
 
+COLUNAS_MICRODADOS_NECESSARIAS = [
+    "NO_MUNICIPIO_PROVA",
+    "CO_MUNICIPIO_PROVA",
+    "IN_TREINEIRO",
+    "SG_UF_PROVA",
+    "Q006",
+    "TP_PRESENCA_CN",
+    "TP_PRESENCA_CH",
+    "TP_PRESENCA_LC",
+    "TP_PRESENCA_MT",
+    "NU_NOTA_CN",
+    "NU_NOTA_CH",
+    "NU_NOTA_LC",
+    "NU_NOTA_MT",
+    "NU_NOTA_REDACAO",
+]
 
-def separar_dados_participantes_resultados(df_microdados):
-    """Separa microdados anuais em dataframes de participantes e resultados.
+
+def separar_dados_participantes_resultados(
+    df_microdados: pd.DataFrame,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Separa microdados anuais em DataFrames de participantes e resultados.
 
     Args:
-            df_microdados: DataFrame bruto com colunas de participantes e notas.
+        df_microdados: DataFrame bruto anual com colunas de participantes e notas.
 
     Returns:
-            Tupla contendo dataframe de participantes e dataframe de resultados.
+        Tupla contendo:
+        1) DataFrame de participantes (perfil socioeconomico e local da prova),
+        2) DataFrame de resultados (presenca e notas).
     """
 
     df_participantes = df_microdados[
-        ["IN_TREINEIRO", "SG_UF_PROVA", "Q006", "NO_MUNICIPIO_PROVA"]
+        [
+            "NO_MUNICIPIO_PROVA",
+            "CO_MUNICIPIO_PROVA",
+            "IN_TREINEIRO",
+            "SG_UF_PROVA",
+            "Q006",
+        ]
     ]
     df_resultado = df_microdados[
         [
             "SG_UF_PROVA",
+            "CO_MUNICIPIO_PROVA",
             "NO_MUNICIPIO_PROVA",
             "TP_PRESENCA_CN",
             "TP_PRESENCA_CH",
@@ -62,14 +91,14 @@ def preparar_diretorios() -> None:
     OUTDIR_REPORT.mkdir(parents=True, exist_ok=True)
 
 
-def caminhos_processados(ano: int):
+def caminhos_processados(ano: int) -> Tuple[Path, Path]:
     """Monta os caminhos de saida por municipio para um ano.
 
     Args:
-            ano: Ano de referencia do processamento.
+        ano: Ano de referencia do processamento.
 
     Returns:
-            Tupla com caminho do csv tratado e caminho do csv do modelo por municipio.
+        Tupla com caminho do csv tratado e caminho do csv do modelo por municipio.
     """
 
     outdir_tratamento = OUTDIR_TRATAMENTO_BASE / str(ano)
@@ -85,18 +114,18 @@ def caminhos_processados(ano: int):
     return caminho_tratado, caminho_modelo
 
 
-def caminhos_processados_tratamento(ano: int):
+def caminhos_processados_tratamento(ano: int) -> Tuple[Path, Path, Path, Path]:
     """Monta todos os caminhos de saida do tratamento para um ano.
 
     Args:
-            ano: Ano de referencia do processamento.
+        ano: Ano de referencia do processamento.
 
     Returns:
-            Tupla com os caminhos, nesta ordem:
-            1) tratado por municipio,
-            2) modelo por municipio,
-            3) tratado por UF,
-            4) modelo por UF.
+        Tupla com os caminhos, nesta ordem:
+        1) tratado por municipio,
+        2) modelo por municipio,
+        3) tratado por UF,
+        4) modelo por UF.
     """
 
     caminho_tratado_municipio, caminho_modelo_municipio = caminhos_processados(ano)
@@ -120,10 +149,10 @@ def arquivos_processados_existem(ano: int) -> bool:
     """Verifica se os arquivos de saida do ano ja foram gerados.
 
     Args:
-            ano: Ano de referencia do processamento.
+        ano: Ano de referencia do processamento.
 
     Returns:
-            True quando ambos os arquivos esperados existem; caso contrario, False.
+        True quando ambos os arquivos esperados existem; caso contrario, False.
     """
 
     caminho_tratado, caminho_modelo = caminhos_processados(ano)
@@ -134,10 +163,10 @@ def arquivos_processados_tratamento_existem(ano: int) -> bool:
     """Verifica se todos os arquivos do tratamento do ano ja foram gerados.
 
     Args:
-            ano: Ano de referencia do processamento.
+        ano: Ano de referencia do processamento.
 
     Returns:
-            True quando todos os arquivos esperados existem; caso contrario, False.
+        True quando todos os arquivos esperados existem; caso contrario, False.
     """
 
     (
@@ -158,22 +187,30 @@ def arquivos_processados_tratamento_existem(ano: int) -> bool:
     )
 
 
-def carregar_dados_brutos(ano: int):
-    """Carrega dados brutos do ENEM para o ano informado.
+def carregar_dados_brutos(ano: int) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Carrega dados brutos do ENEM e retorna participantes e resultados.
+
+    Apenas as colunas necessarias ao pipeline sao carregadas para reduzir
+    custo de memoria e tempo de leitura.
 
     Args:
-            ano: Ano de referencia entre 2015 e 2023.
+        ano: Ano de referencia entre 2015 e 2023.
 
     Returns:
-            Tupla com dataframes de participantes e resultados brutos.
+        Tupla com DataFrames de participantes e resultados brutos.
 
     Raises:
-            ValueError: Quando o ano informado nao e suportado.
+        ValueError: Quando o ano informado nao e suportado.
     """
 
     if ano in ARQUIVOS_MICRODADOS:
         arquivo_microdados = INDIR / ARQUIVOS_MICRODADOS[ano]
-        df_microdados = pd.read_csv(arquivo_microdados, sep=";", encoding="latin-1")
+        df_microdados = pd.read_csv(
+            arquivo_microdados,
+            sep=";",
+            encoding="latin-1",
+            usecols=COLUNAS_MICRODADOS_NECESSARIAS,
+        )
         return separar_dados_participantes_resultados(df_microdados)
 
     raise ValueError("Ano inválido. Por favor, escolha um ano entre 2015 e 2023.")

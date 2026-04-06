@@ -1,3 +1,6 @@
+from typing import Tuple
+
+import pandas as pd
 from sklearn.cluster import KMeans
 
 from utils.carregamento_dados import (
@@ -8,18 +11,34 @@ from utils.carregamento_dados import (
 from utils.fluxo_dados import carregar_ou_tratar_dados
 
 
-def clustering_de_dados(df_pre_clustering, x_scaled, coluna_identificacao="MUNICIPIO"):
+def clustering_de_dados(
+    df_pre_clustering: pd.DataFrame,
+    x_scaled: pd.DataFrame,
+    coluna_identificacao: str = "MUNICIPIO",
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Executa KMeans e organiza os clusters por desempenho medio.
 
     Args:
-        df_pre_clustering: DataFrame com dados agregados por municipio.
-        x_scaled: DataFrame com features padronizadas para o modelo.
-        coluna_identificacao: Coluna usada para contar os registros no resumo.
+        df_pre_clustering: DataFrame agregado para o nivel analisado
+            (municipio ou UF), contendo as metricas de notas e renda.
+        x_scaled: DataFrame com as features usadas no KMeans.
+        coluna_identificacao: Coluna usada para contagem no resumo.
+            Valores aceitos: "MUNICIPIO" ou "UF".
 
     Returns:
-        Tupla com dataframe pos-clustering por municipio e resumo agregado
-        das metricas por cluster.
+        Tupla contendo:
+        1) DataFrame pos-clustering com a coluna CLUSTER reordenada por
+           desempenho medio (0 = menor desempenho, 2 = maior desempenho),
+        2) DataFrame de resumo agregado das metricas por cluster.
+
+    Raises:
+        ValueError: Quando coluna_identificacao nao e "MUNICIPIO" nem "UF".
     """
+
+    if coluna_identificacao not in {"MUNICIPIO", "UF"}:
+        raise ValueError(
+            "coluna_identificacao deve ser 'MUNICIPIO' ou 'UF'."
+        )
 
     kmeans = KMeans(n_clusters=3, n_init=200, random_state=0)
     kmeans.fit(x_scaled)
@@ -69,7 +88,7 @@ def clustering_de_dados(df_pre_clustering, x_scaled, coluna_identificacao="MUNIC
     return df_pos_clustering, resumo_clusters
 
 
-def processar_ano(ano: int):
+def processar_ano(ano: int) -> None:
     """Processa um ano completo: tratamento, clustering e exportacao.
 
     Args:
@@ -137,7 +156,7 @@ def processar_ano(ano: int):
     print(f"Resumo dos clusters por UF salvo com sucesso em {caminho_resumo_uf}\n")
 
 
-def rodar_todos_os_anos():
+def rodar_todos_os_anos() -> None:
     """Executa o pipeline de clustering para todos os anos disponiveis."""
 
     for ano in ANOS_DISPONIVEIS:
