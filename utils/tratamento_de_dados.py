@@ -273,7 +273,7 @@ def agrupar_por_uf(df_pre_clustering_municipio: pd.DataFrame) -> pd.DataFrame:
             lambda grupo: pd.Series(
                 {
                     "QTD_PARTICIPANTES": grupo["QTD_PARTICIPANTES"].sum(),
-                    "RENDA_FAMILIAR_SM_MEDIA": grupo["RENDA_FAMILIAR_SM_MEDIA"].mean(),
+                    "RENDA_FAMILIAR_SM_MEDIA": media_ponderada(grupo, "RENDA_FAMILIAR_SM_MEDIA"),
                     **{col: media_ponderada(grupo, col) for col in colunas_notas_media},
                 }
             )
