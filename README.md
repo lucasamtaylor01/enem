@@ -1,4 +1,4 @@
-# 📄 Análise de dados Exame Nacional do Ensino Médio (ENEM) (2015-2023)
+# 📄 Análise de dados do ENEM entre os anos de 2015 e 2023 
 
 ## 📝 Descrição
 Neste repositório, realizamos o tratamento e a análise das notas do ENEM entre 2015 e 2023 por município e UF.
